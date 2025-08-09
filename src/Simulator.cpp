@@ -1,4 +1,4 @@
-running#include "Simulator.hpp"
+#include "Simulator.hpp"
 #include <iostream>
 #include <iomanip>
 #include <csignal>
