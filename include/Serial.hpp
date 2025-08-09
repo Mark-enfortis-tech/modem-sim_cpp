@@ -8,12 +8,12 @@
 #include <termios.h>
 #include <cstdint>
 
-// Message structure for queue
-struct Message {
+// QueueMessage structure for message queue (renamed from Message)
+struct QueueMessage {
     std::vector<uint8_t> data;
     
-    Message() = default;
-    Message(const std::vector<uint8_t>& data) : data(data) {}
+    QueueMessage() = default;
+    QueueMessage(const std::vector<uint8_t>& data) : data(data) {}
 };
 
 // Thread-safe message queue
@@ -29,7 +29,7 @@ public:
     
 private:
     const size_t maxQueueSize;
-    std::queue<Message> messages;
+    std::queue<QueueMessage> messages;  // Using QueueMessage instead of Message
     mutable std::mutex queueMutex;
 };
 
