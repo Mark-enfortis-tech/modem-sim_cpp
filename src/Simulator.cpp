@@ -56,7 +56,7 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
     }
     
     std::cout << "Serial ports opened successfully\n";
-    std::cout << "Waiting for message, STATE::WAIT_TX...\n";
+    std::cout << "Waiting for message, State::WAIT_TX...\n";
     
     // Set running flag
     running = true;
@@ -67,55 +67,55 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
     while (running) {
 
         switch(currentState){
-            case STATE::WAIT_TX:
+            case State::WAIT_TX:
             // wait for transmission
             // std::cout << "Recieved message\n";
-            currentState = STATE::SEND_RESP1;
+            currentState = State::SEND_RESP1;
             break;
 
-            case STATE::SEND_RESP1:
+            case State::SEND_RESP1:
             // send response 1 to sender
             std::cout << "Recieved message\n";
-            std::cout << "STATE::SEND_RESP1\n";
-            currentState = STATE::SEND_RX;
+            std::cout << "State::SEND_RESP1\n";
+            currentState = State::SEND_RX;
             break;
 
-            case STATE::SEND_RX:
+            case State::SEND_RX:
             // send message to receiver
-            std::cout << "STATE::SEND_RX\n";
-            currentState = STATE::SEND_RESP2;
+            std::cout << "State::SEND_RX\n";
+            currentState = State::SEND_RESP2;
             break;
 
-            case STATE::SEND_RESP2:
+            case State::SEND_RESP2:
             // send response 2 to sender
-            std::cout << "STATE::SEND_RESP2\n";
-            std::cout << "Waiting for ACK, STATE::WAIT_ACK...\n";
-            currentState = STATE::WAIT_ACK;
+            std::cout << "State::SEND_RESP2\n";
+            std::cout << "Waiting for ACK, State::WAIT_ACK...\n";
+            currentState = State::WAIT_ACK;
             break;
 
-            case STATE::WAIT_ACK:
+            case State::WAIT_ACK:
             // wait for ack message
             std::cout << "Recieved ACK\n";
-            currentState = STATE::SEND_ACK_RESP1;
+            currentState = State::SEND_ACK_RESP1;
             break;
 
-            case STATE::SEND_ACK_RESP1:
+            case State::SEND_ACK_RESP1:
             // send ack response 1 to receiver
-            std::cout << "STATE::SEND_ACK_RESP1\n";
-            currentState = STATE::SEND_ACK_RX;
+            std::cout << "State::SEND_ACK_RESP1\n";
+            currentState = State::SEND_ACK_RX;
             break;
 
-            case STATE::SEND_ACK_RX:
+            case State::SEND_ACK_RX:
             // send ack message to sender
-            std::cout << "STATE::SEND_ACK\n";
-            currentState = STATE::SEND_ACK_RESP2;
+            std::cout << "State::SEND_ACK\n";
+            currentState = State::SEND_ACK_RESP2;
             break;
 
-            case STATE::SEND_ACK_RESP2:
+            case State::SEND_ACK_RESP2:
             // send ack response 2 to sender
-            std::cout << "STATE::SEND_ACK_RESP2\n";
-            std::cout << "STATE::WAIT_TX\n";
-            currentState = STATE::WAIT_TX;
+            std::cout << "State::SEND_ACK_RESP2\n";
+            std::cout << "State::WAIT_TX\n";
+            currentState = State::WAIT_TX;
             break;
         }
         // Read from sender port
