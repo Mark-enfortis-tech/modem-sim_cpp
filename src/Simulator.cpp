@@ -11,6 +11,7 @@ PlmSimulator* PlmSimulator::instance = nullptr;
 PlmSimulator::PlmSimulator() : running(false) {
     // Store instance pointer for signal handler
     instance = this;
+    STATE currentState = STATE::WAIT_TX;
 }
 
 PlmSimulator::~PlmSimulator() {
