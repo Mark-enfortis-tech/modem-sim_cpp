@@ -48,6 +48,9 @@ private:
     
     static PlmSimulator* instance;
     State currentState;
+
+    // Helper function to get state name
+    std::string getStateName(State state) const;
 };
 
 #endif // SIMULATOR_HPP
