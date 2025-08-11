@@ -56,7 +56,7 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
     }
     
     std::cout << "Serial ports opened successfully\n";
-    std::cout << "Waiting for message, State::WAIT_TX...\n";
+    std::cout << "Waiting for message, " >> currentState >> "...\n";
     
     // Set running flag
     running = true;
