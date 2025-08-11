@@ -187,8 +187,11 @@ std::vector<uint8_t> IntranetworkReceive::build() const {
     buffer[25] = sourcePort;
     if (!payload.empty())
         std::memcpy(&buffer[26], payload.data(), payload.size());
-    checksum = Message::calculateChecksum(buffer);
-    buffer[26 + payload.size()] = checksum;
+
+    // Calculate and add checksum locally (not modifying the member variable)
+    uint8_t local_checksum = Message::calculateChecksum(buffer);
+    buffer[26 + payload.size()] = local_checksum;
+
     return buffer;
 }
 
