@@ -30,6 +30,20 @@ void PlmSimulator::stop() {
     running = false;
 }
 
+std::string PlmSimulator::getStateName(State state) const {
+    switch (state) {
+        case State::WAIT_TX: return "WAIT_TX";
+        case State::SEND_RESP1: return "SEND_RESP1";
+        case State::SEND_RX: return "SEND_RX";
+        case State::SEND_RESP2: return "SEND_RESP2";
+        case State::WAIT_ACK: return "WAIT_ACK";
+        case State::SEND_ACK_RESP1: return "SEND_ACK_RESP1";
+        case State::SEND_ACK_RX: return "SEND_ACK_RX";
+        case State::SEND_ACK_RESP2: return "SEND_ACK_RESP2";
+        default: return "UNKNOWN";
+    }
+}
+
 void PlmSimulator::convertTxReqToRxInd(const TransmitRequest& req, IntranetworkReceive& ind) {
     ind.createFromTransmitRequest(req);
 }
