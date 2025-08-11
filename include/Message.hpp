@@ -95,6 +95,7 @@ public:
     void setTag(uint8_t t);
     void setResponseNumber(uint8_t r);
     void setResult(uint8_t r);
+    uint8_t checksum;
 
 private:
     uint8_t startByte;
@@ -105,7 +106,7 @@ private:
     uint8_t responseNumber;
     uint8_t result;
     uint16_t tag;
-    uint8_t checksum;
+    
 };
 
 // Intranetwork Receive class
@@ -135,6 +136,7 @@ public:
     void setFinalTargetId(uint16_t id);
     void setSourcePort(uint8_t port);
     void setPayload(const std::vector<uint8_t>& data);
+    uint8_t checksum;
 
 private:
     uint8_t startByte;
@@ -158,7 +160,7 @@ private:
     uint16_t finalTargetId;
     uint8_t sourcePort;
     std::vector<uint8_t> payload;
-    uint8_t checksum;
+    
 };
 
 #endif // MESSAGE_HPP
