@@ -11,7 +11,7 @@ PlmSimulator* PlmSimulator::instance = nullptr;
 PlmSimulator::PlmSimulator() : running(false) {
     // Store instance pointer for signal handler
     instance = this;
-    STATE currentState = STATE::WAIT_TX;
+    State currentState = State::WAIT_TX;
 }
 
 PlmSimulator::~PlmSimulator() {
@@ -67,51 +67,51 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
     while (running) {
 
         switch(currentState){
-            case STATE::WAIT_TX
+            case STATE::WAIT_TX:
             // wait for transmission
             // std::cout << "Recieved message\n";
             currentState = STATE::SEND_RESP1;
             break;
 
-            case STATE::SEND_RESP1
+            case STATE::SEND_RESP1:
             // send response 1 to sender
             std::cout << "Recieved message\n";
             std::cout << "STATE::SEND_RESP1\n";
             currentState = STATE::SEND_RX;
             break;
 
-            case STATE::SEND_RX
+            case STATE::SEND_RX:
             // send message to receiver
             std::cout << "STATE::SEND_RX\n";
             currentState = STATE::SEND_RESP2;
             break;
 
-            case STATE::SEND_RESP2
+            case STATE::SEND_RESP2:
             // send response 2 to sender
             std::cout << "STATE::SEND_RESP2\n";
             std::cout << "Waiting for ACK, STATE::WAIT_ACK...\n";
             currentState = STATE::WAIT_ACK;
             break;
 
-            case STATE::WAIT_ACK
+            case STATE::WAIT_ACK:
             // wait for ack message
             std::cout << "Recieved ACK\n";
             currentState = STATE::SEND_ACK_RESP1;
             break;
 
-            case STATE::SEND_ACK_RESP1
+            case STATE::SEND_ACK_RESP1:
             // send ack response 1 to receiver
             std::cout << "STATE::SEND_ACK_RESP1\n";
             currentState = STATE::SEND_ACK_RX;
             break;
 
-            case STATE::SEND_ACK_RX
+            case STATE::SEND_ACK_RX:
             // send ack message to sender
             std::cout << "STATE::SEND_ACK\n";
             currentState = STATE::SEND_ACK_RESP2;
             break;
 
-            case STATE::SEND_ACK_RESP2
+            case STATE::SEND_ACK_RESP2:
             // send ack response 2 to sender
             std::cout << "STATE::SEND_ACK_RESP2\n";
             std::cout << "STATE::WAIT_TX\n";
