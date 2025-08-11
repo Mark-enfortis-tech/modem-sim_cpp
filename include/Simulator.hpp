@@ -19,7 +19,7 @@ public:
         SEND_RESP2,
         WAIT_ACK,
         SEND_ACK_RESP1,
-        SEND_ACK,
+        SEND_ACK_RX,
         SEND_ACK_RESP2
     };
 
