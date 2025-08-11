@@ -16,7 +16,7 @@ public:
         WAIT_TX,
         SEND_RESP1,
         SEND_RX,
-        SEND_RESP1,
+        SEND_RESP2,
         WAIT_ACK,
         SEND_ACK_RESP1,
         SEND_ACK,
