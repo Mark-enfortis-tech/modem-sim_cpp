@@ -27,11 +27,9 @@ constexpr uint8_t STATUS_OK = 0x00;
 
 class Message {
 public:
-    // Calculate XOR checksum from Type to end of Payload
     static uint8_t calculateChecksum(const std::vector<uint8_t>& data);
     static uint8_t calculateChecksum(const uint8_t* data, int len);
-    
-    // Debug function to print message in hex format
+
     static void printHexDump(const std::string& prefix, const std::vector<uint8_t>& data);
     static void printHexDump(const std::string& prefix, const uint8_t* data, int len);
 };
@@ -40,108 +38,110 @@ public:
 class TransmitRequest {
 public:
     TransmitRequest();
-    
-    // Parse a transmit request message from a buffer
     bool parse(const std::vector<uint8_t>& buffer);
     bool parse(const uint8_t* buffer, int len);
-    
+
     // Getters
-    uint8_t getStartByte() const { return startByte; }
-    uint16_t getLength() const { return length; }
-    uint8_t getType() const { return type; }
-    uint8_t getOpcode() const { return opcode; }
-    uint8_t getTag() const { return tag; }
-    uint8_t getTxFlags() const { return txFlags; }
-    uint8_t getDataService() const { return dataService; }
-    uint8_t getModulation() const { return modulation; }
-    uint8_t getTxService() const { return txService; }
-    uint8_t getPriority() const { return priority; }
-    uint8_t getCw() const { return cw; }
-    uint16_t getNetId() const { return netId; }
-    uint16_t getTargetId() const { return targetId; }
-    uint8_t getTargetIdType() const { return targetIdType; }
-    uint8_t getSourcePort() const { return sourcePort; }
-    const std::vector<uint8_t>& getPayload() const { return payload; }
-    
+    uint8_t getStartByte() const;
+    uint16_t getLength() const;
+    uint8_t getType() const;
+    uint8_t getOpcode() const;
+    uint8_t getDataService() const;
+    uint8_t getPriority() const;
+    uint8_t getAckService() const;
+    uint8_t getHops() const;
+    uint8_t getGain() const;
+    uint16_t getTag() const;
+    uint8_t getEncrypt() const;
+    uint8_t getDestPort() const;
+    uint16_t getDestAddr() const;
+    const std::vector<uint8_t>& getPayload() const;
+    uint8_t getChecksum() const;
+    // For use by IntranetworkReceive (dummy implementations)
+    uint16_t getNetId() const;
+    uint16_t getTargetId() const;
+    uint8_t getSourcePort() const;
+
 private:
     uint8_t startByte;
     uint16_t length;
     uint8_t type;
     uint8_t opcode;
-    uint8_t tag;
-    uint8_t txFlags;
     uint8_t dataService;
-    uint8_t modulation;
-    uint8_t txService;
     uint8_t priority;
-    uint8_t cw;
-    uint16_t netId;
-    uint16_t targetId;
-    uint8_t targetIdType;
-    uint8_t sourcePort;
+    uint8_t ackService;
+    uint8_t hops;
+    uint8_t gain;
+    uint16_t tag;
+    uint8_t encrypt;
+    uint8_t destPort;
+    uint16_t destAddr;
     std::vector<uint8_t> payload;
+    uint8_t checksum;
 };
 
 // Transmit Response message class
 class TransmitResponse {
 public:
-    TransmitResponse(uint8_t type = MSG_TYPE_TRANSMIT_RESP1, 
-                    uint8_t status = STATUS_OK, 
+    TransmitResponse(uint8_t type = MSG_TYPE_TRANSMIT_RESP1,
+                    uint8_t status = STATUS_OK,
                     uint8_t tag = 0);
-    
-    // Build a transmit response message into a buffer
+
     std::vector<uint8_t> build() const;
-    
+
     // Setters
-    void setType(uint8_t type) { this->type = type; }
-    void setStatus(uint8_t status) { this->status = status; }
-    void setTag(uint8_t tag) { this->tag = tag; }
-    
+    void setType(uint8_t typ);
+    void setStatus(uint8_t stat);
+    void setTag(uint8_t t);
+    void setResponseNumber(uint8_t r);
+    void setResult(uint8_t r);
+
 private:
     uint8_t startByte;
     uint16_t length;
     uint8_t type;
     uint8_t opcode;
     uint8_t status;
-    uint8_t tag;
+    uint8_t responseNumber;
+    uint8_t result;
+    uint16_t tag;
+    uint8_t checksum;
 };
 
-// Intranetwork Receive Indication message class
+// Intranetwork Receive class
 class IntranetworkReceive {
 public:
     IntranetworkReceive();
-    
-    // Build an intranetwork receive indication message into a buffer
+
     std::vector<uint8_t> build() const;
-    
-    // Create from a transmit request
+
     void createFromTransmitRequest(const TransmitRequest& req);
-    
+
     // Setters
-    void setRxFlags(uint8_t flags) { rxFlags = flags; }
-    void setDataService(uint8_t service) { dataService = service; }
-    void setModulation(uint8_t mod) { modulation = mod; }
-    void setSq(uint8_t sq) { this->sq = sq; }
-    void setTxService(uint8_t service) { txService = service; }
-    void setPriority(uint8_t priority) { this->priority = priority; }
-    void setCw(uint8_t cw) { this->cw = cw; }
-    void setRepeated(uint8_t repeated) { this->repeated = repeated; }
-    void setTxResult(uint8_t result) { txResult = result; }
-    void setNetId(uint16_t id) { netId = id; }
-    void setSourceId(uint16_t id) { sourceId = id; }
-    void setTargetId(uint16_t id) { targetId = id; }
-    void setOriginIdType(uint8_t type) { originIdType = type; }
-    void setOriginId(uint16_t id) { originId = id; }
-    void setFinalTargetId(uint16_t id) { finalTargetId = id; }
-    void setSourcePort(uint8_t port) { sourcePort = port; }
-    void setPayload(const std::vector<uint8_t>& data) { payload = data; }
-    
+    void setRxFlags(uint8_t flags);
+    void setDataService(uint8_t service);
+    void setModulation(uint8_t mod);
+    void setSq(uint8_t s);
+    void setTxService(uint8_t service);
+    void setPriority(uint8_t p);
+    void setCw(uint8_t c);
+    void setRepeated(uint8_t r);
+    void setTxResult(uint8_t result);
+    void setNetId(uint16_t id);
+    void setSourceId(uint16_t id);
+    void setTargetId(uint16_t id);
+    void setOriginIdType(uint8_t t);
+    void setOriginId(uint16_t id);
+    void setFinalTargetId(uint16_t id);
+    void setSourcePort(uint8_t port);
+    void setPayload(const std::vector<uint8_t>& data);
+
 private:
     uint8_t startByte;
     uint16_t length;
     uint8_t type;
     uint8_t opcode;
-    uint8_t rxFlags;
+    uint8_t rxType;
     uint8_t dataService;
     uint8_t modulation;
     uint8_t sq;
@@ -158,6 +158,7 @@ private:
     uint16_t finalTargetId;
     uint8_t sourcePort;
     std::vector<uint8_t> payload;
+    uint8_t checksum;
 };
 
 #endif // MESSAGE_HPP
