@@ -10,20 +10,6 @@ class PlmSimulator {
 public:
     PlmSimulator();
     ~PlmSimulator();
-
-     // Define the possible states
-    enum class State {
-        WAIT_TX,
-        SEND_RESP1,
-        SEND_RX,
-        SEND_RESP1,
-        WAIT_ACK,
-        SEND_ACK_RESP1,
-        SEND_ACK,
-        SEND_ACK_RESP2
-    };
-
-    
     
     // Prevent copying
     PlmSimulator(const PlmSimulator&) = delete;
@@ -47,7 +33,6 @@ private:
     std::atomic<bool> running;
     
     static PlmSimulator* instance;
-    State currentState;
 };
 
 #endif // SIMULATOR_HPP
