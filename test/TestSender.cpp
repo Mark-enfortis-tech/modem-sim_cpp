@@ -316,7 +316,7 @@ private:
     int fd;
     std::atomic<bool> running;
     State currentState;
-    std::string message
+    std::string message;
 
     std::vector<uint8_t> receiveMessage(int timeout_ms = 100) {
         if (fd < 0) {
