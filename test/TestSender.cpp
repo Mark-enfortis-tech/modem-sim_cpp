@@ -215,6 +215,8 @@ public:
         
         running = true;
         std::cout << "Sender running, waiting for message, " << getStateName() << "...\n";
+
+        
         
         while (running) {
             switch(getCurrentState()){
@@ -274,6 +276,7 @@ public:
 
                 case State::WAIT_ACK: {
                     std::cout << "State: "<< getStateName() <<"\n";
+                    std::vector<uint8_t> buffer(1024);
 
                     std::vector<uint8_t> response = receiveResponse();
                     if (!response.empty()) {
