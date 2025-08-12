@@ -384,67 +384,6 @@ private:
         return payload_len;
     }
     
-    std::vector<uint8_t> createTransmitRequest(const std::vector<uint8_t>& payload, uint8_t tag) {
-        size_t payloadSize = std::min(payload.size(), static_cast<size_t>(MAX_PAYLOAD_SIZE));
-        std::vector<uint8_t> buffer(19 + payloadSize); // Header + payload + checksum
-        
-        // Header
-        buffer[0] = CMD_START_BYTE;
-        
-        // Length (excludes start byte, length field, and checksum)
-        uint16_t length_field = 15 + payloadSize; // 15 bytes for header fields excluding start byte and length
-        buffer[1] = length_field & 0xFF;
-        buffer[2] = (length_field >> 8) & 0xFF;
-        
-        // Type & Opcode
-        buffer[3] = MSG_TYPE_TRANSMIT_REQ;
-        buffer[4] = OPCODE_TRANSMIT_REQ;
-        
-        // Tag
-        buffer[5] = tag;
-        
-        // TX Header
-        buffer[6] = 0x00;  // TX flags
-        buffer[7] = 0x00;  // Data service
-        buffer[8] = 0x00;  // Modulation
-        buffer[9] = 0x0D;  // TX service
-        buffer[10] = 0x00; // Priority
-        buffer[11] = 0x00; // CW
-        
-        // Network ID
-        buffer[12] = 0x01; // Network ID LSB
-        buffer[13] = 0x00; // Network ID MSB
-        
-        // Target ID
-        buffer[14] = 0x00; // Target ID LSB
-        buffer[15] = 0x00; // Target ID MSB
-        
-        // Target ID Type
-        buffer[16] = 0x00; // Short address
-        
-        // Source Port
-        buffer[17] = 0x01;
-        
-        // Payload
-        if (!payload.empty()) {
-            std::memcpy(&buffer[18], payload.data(), payloadSize);
-        }
-        
-        // Checksum
-        buffer[18 + payloadSize] = Message::calculateChecksum(buffer);
-        
-        return buffer;
-    }
-  
-    bool sendMessage(const std::vector<uint8_t>& buffer) {
-        if (fd < 0) {
-            return false;
-        }
-        
-        int n = ::write(fd, buffer.data(), buffer.size());
-        return (n == static_cast<int>(buffer.size()));
-    }
-    
 private:
     int fd;
     State currentState;
