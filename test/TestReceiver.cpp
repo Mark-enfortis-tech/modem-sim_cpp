@@ -176,7 +176,7 @@ public:
                 case State::SEND_ACK: {
                     std::cout << "State: "<< getStateName() <<"\n";
                     // Create transmit request
-                    std::vector<uint8_t> buffer = createTransmitRequest(std::string("ACK"), 0x01);
+                    std::vector<uint8_t> buffer = createTransmitRequest(std::vector<uint8_t>({'A', 'C', 'K'}), 0x01);
 
                     // Send the message
                     Message::printHexDump("Sending transmit request", buffer);
