@@ -33,6 +33,12 @@ public:
         currentState = newState;
     };
 
+    void setCurrentMessage(std::string _message){
+        message = _message;
+    }
+
+    std::string getCurrentMessage() {return message};
+
 
     std::string getStateName() const {
         switch (currentState) {
@@ -222,7 +228,7 @@ public:
                 case State::SEND_TX: {
                     std::cout << "State: "<< getStateName() <<"\n";
                     // Create transmit request
-                    std::vector<uint8_t> buffer = createTransmitRequest(message, 0x01);
+                    std::vector<uint8_t> buffer = createTransmitRequest(getCurrentMessage(), 0x01);
 
                     // Send the message
                     Message::printHexDump("Sending transmit request", buffer);
@@ -310,6 +316,7 @@ private:
     int fd;
     std::atomic<bool> running;
     State currentState;
+    std::string message
 
     std::vector<uint8_t> receiveMessage(int timeout_ms = 100) {
         if (fd < 0) {
@@ -412,11 +419,12 @@ int main(int argc, char *argv[]) {
     std::signal(SIGTERM, handleSignal);
     
     std::string port = argv[1];
-    std::string message = (argc > 2) ? argv[2] : "Test message from sender";
+    std::string _message = (argc > 2) ? argv[2] : "Test message from sender";
     
     std::cout << "Opening serial port " << port << "...\n";
     TestSender sender;
     g_sender = &sender;
+    sender.setCurrentMessage(_message);
 
     sender.setCurrentState(State::WAIT);
     std::cout << "State: "<< getStateName() <<"\n";
