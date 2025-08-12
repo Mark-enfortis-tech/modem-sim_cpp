@@ -189,60 +189,60 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
             setCurrentState(State::WAIT_TX);
             break;
         }
-        // Read from sender port
-        std::vector<uint8_t> buffer;
-        int n = senderPort.read(buffer, MAX_PAYLOAD_SIZE + 100);
+        // // Read from sender port
+        // std::vector<uint8_t> buffer;
+        // int n = senderPort.read(buffer, MAX_PAYLOAD_SIZE + 100);
         
-        if (n > 0) {
-            // Check if it's a valid message
-            if (!buffer.empty() && buffer[0] == CMD_START_BYTE) {
-                Message::printHexDump("Received from sender", buffer);
+        // if (n > 0) {
+        //     // Check if it's a valid message
+        //     if (!buffer.empty() && buffer[0] == CMD_START_BYTE) {
+        //         Message::printHexDump("Received from sender", buffer);
                 
-                // Parse the transmit request
-                TransmitRequest req;
-                bool result = req.parse(buffer);
+        //         // Parse the transmit request
+        //         TransmitRequest req;
+        //         bool result = req.parse(buffer);
                 
-                if (result && req.getType() == MSG_TYPE_TRANSMIT_REQ && req.getOpcode() == OPCODE_TRANSMIT_REQ) {
-                    std::cout << "Valid transmit request received, tag: " 
-                              << std::hex << std::setw(2) << std::setfill('0') 
-                              << static_cast<int>(req.getTag()) << std::dec << "\n";
+        //         if (result && req.getType() == MSG_TYPE_TRANSMIT_REQ && req.getOpcode() == OPCODE_TRANSMIT_REQ) {
+        //             std::cout << "Valid transmit request received, tag: " 
+        //                       << std::hex << std::setw(2) << std::setfill('0') 
+        //                       << static_cast<int>(req.getTag()) << std::dec << "\n";
                     
-                    // Send first response (acknowledge receipt)
-                    TransmitResponse resp1(MSG_TYPE_TRANSMIT_RESP1, STATUS_OK, req.getTag());
-                    std::vector<uint8_t> respBuffer = resp1.build();
+        //             // Send first response (acknowledge receipt)
+        //             TransmitResponse resp1(MSG_TYPE_TRANSMIT_RESP1, STATUS_OK, req.getTag());
+        //             std::vector<uint8_t> respBuffer = resp1.build();
                     
-                    if (!respBuffer.empty()) {
-                        Message::printHexDump("Sending response 1", respBuffer);
-                        senderPort.write(respBuffer);
-                    }
+        //             if (!respBuffer.empty()) {
+        //                 Message::printHexDump("Sending response 1", respBuffer);
+        //                 senderPort.write(respBuffer);
+        //             }
                     
-                    // Convert to intranetwork receive indication
-                    IntranetworkReceive rxInd;
-                    convertTxReqToRxInd(req, rxInd);
+        //             // Convert to intranetwork receive indication
+        //             IntranetworkReceive rxInd;
+        //             convertTxReqToRxInd(req, rxInd);
                     
-                    // Build and send intranetwork receive indication to receiver
-                    std::vector<uint8_t> indBuffer = rxInd.build();
+        //             // Build and send intranetwork receive indication to receiver
+        //             std::vector<uint8_t> indBuffer = rxInd.build();
                     
-                    if (!indBuffer.empty()) {
-                        Message::printHexDump("Sending intranetwork receive indication", indBuffer);
-                        receiverPort.write(indBuffer);
+        //             if (!indBuffer.empty()) {
+        //                 Message::printHexDump("Sending intranetwork receive indication", indBuffer);
+        //                 receiverPort.write(indBuffer);
                         
-                        // Send second response (transmission complete)
-                        TransmitResponse resp2(MSG_TYPE_TRANSMIT_RESP2, STATUS_OK, req.getTag());
-                        respBuffer = resp2.build();
+        //                 // Send second response (transmission complete)
+        //                 TransmitResponse resp2(MSG_TYPE_TRANSMIT_RESP2, STATUS_OK, req.getTag());
+        //                 respBuffer = resp2.build();
                         
-                        if (!respBuffer.empty()) {
-                            Message::printHexDump("Sending response 2", respBuffer);
-                            senderPort.write(respBuffer);
-                        }
-                    }
-                } else {
-                    std::cout << "Invalid transmit request received\n";
-                }
-            }
+        //                 if (!respBuffer.empty()) {
+        //                     Message::printHexDump("Sending response 2", respBuffer);
+        //                     senderPort.write(respBuffer);
+        //                 }
+        //             }
+        //         } else {
+        //             std::cout << "Invalid transmit request received\n";
+        //         }
+        //     }
 
 
-        }
+        // }
         
         // Small delay to prevent CPU hogging
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
