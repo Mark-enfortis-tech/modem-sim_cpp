@@ -11,7 +11,7 @@ public:
     PlmSimulator();
     ~PlmSimulator();
 
-     // Define the possible states
+    // Define the possible states
     enum class State {
         WAIT_TX,
         SEND_RESP1,
