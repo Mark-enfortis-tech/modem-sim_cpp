@@ -164,7 +164,7 @@ public:
                                 std::cout << "Received text: " << text << std::endl;
                                 setCurrentState(State::SEND_ACK);
                             } else {
-                                std::cout << "Invalid extracted payload result\n";
+                                std::cout << "Invalid extracted payload result: %d\n", result;
                             }
                         } else {
                             std::cout << "Invalid buffer size\n";
