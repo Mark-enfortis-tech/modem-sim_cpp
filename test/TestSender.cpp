@@ -218,7 +218,7 @@ public:
             switch(getCurrentState()){
                 case State::WAIT: {
                     // Small delay to prevent CPU hogging
-                    usleep(500); // 10ms
+                    sleep(1); // 1s
                     setCurrentState(State::SEND_TX);
                 }
                 break;
