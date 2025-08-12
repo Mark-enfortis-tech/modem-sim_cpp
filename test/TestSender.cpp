@@ -12,7 +12,7 @@
 
 class TestSender {
 public:
-    TestSender() : fd(-1) {}
+    TestSender() : fd(-1), , currentState(State::WAIT) {}
     
     ~TestSender() {
         close();
@@ -397,7 +397,7 @@ private:
 };
 
 // Global receiver instance for signal handler
-Testsender* g_sender = nullptr;
+TestSender* g_sender = nullptr;
 
 // Signal handler for graceful shutdown
 void handleSignal(int sig) {
@@ -429,8 +429,7 @@ int main(int argc, char *argv[]) {
     g_sender = &sender;
     sender.setCurrentMessage(_message);
 
-    sender.setCurrentState(State::WAIT);
-    std::cout << "State: "<< getStateName() <<"\n";
+    std::cout << "State: "<< sender.getStateName() <<"\n";
     
     if (!sender.open(port)) {
         std::cerr << "Failed to open serial port " << port << "\n";
