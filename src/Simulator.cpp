@@ -88,10 +88,10 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
     
     // Main processing loop
     while (running) {
-
         switch(getCurrentState()){
-            case State::WAIT_TX:    // wait for transmission
             
+            case State::WAIT_TX: {
+                // wait for transmission
                 std::vector<uint8_t> buffer;
                 int n = senderPort.read(buffer, MAX_PAYLOAD_SIZE + 100);
                 if (n > 0) {
@@ -107,12 +107,17 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
                                     << std::hex << std::setw(2) << std::setfill('0') 
                                     << static_cast<int>(req.getTag()) << std::dec << "\n";
                             setCurrentState(State::SEND_RESP1);
+                            } else {
+                                std::cout << "Invalid transmit request received\n";
+                                // Stay in WAIT_TX state
                             }
                         }
                     }
+                }
             break;
 
-            case State::SEND_RESP1: // send response 1 to sender
+            case State::SEND_RESP1: {
+                // send response 1 to sender
                 std::cout << "State::SEND_RESP1\n";
 
                 TransmitResponse resp1(MSG_TYPE_TRANSMIT_RESP1, STATUS_OK, req.getTag());
@@ -126,9 +131,11 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
                     std::cout << "Error in respBuffer, State::SEND_RESP1, changing to State::WAIT_TX\n";
                     setCurrentState(State::WAIT_TX);
                 }
+            }
             break;
 
-            case State::SEND_RX:    // send message to receiver
+            case State::SEND_RX: {
+                // send message to receiver
                 std::cout << "State::SEND_RX\n";
 
                 // Convert to intranetwork receive indication
@@ -144,9 +151,11 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
                     std::cout << "Error in indBuffer, State::SEND_RX, changing to State::WAIT_TX\n";
                     setCurrentState(State::WAIT_TX);
                 }; 
+            }
             break;
 
-            case State::SEND_RESP2: // send response 2 to sender
+            case State::SEND_RESP2: { 
+                // send response 2 to sender
                 std::cout << "State::SEND_RESP2\n";
                 
                 // Send second response (transmission complete)
@@ -162,6 +171,7 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
                     std::cout << "Error in respBuffer, State::SEND_RESP2, changing to State::WAIT_TX\n";
                     setCurrentState(State::WAIT_TX);
                 };
+            }
             break;
 
             case State::WAIT_ACK:  // wait for ack message
@@ -189,6 +199,8 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
             setCurrentState(State::WAIT_TX);
             break;
         }
+        
+        
         // // Read from sender port
         // std::vector<uint8_t> buffer;
         // int n = senderPort.read(buffer, MAX_PAYLOAD_SIZE + 100);
