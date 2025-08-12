@@ -118,7 +118,7 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
 
             case State::SEND_RESP1: {
                 // send response 1 to sender
-                std::cout << "State::SEND_RESP1\n";
+                std::cout << "State: "<< getStateName() << std::endl;
 
                 TransmitResponse resp1(MSG_TYPE_TRANSMIT_RESP1, STATUS_OK, req.getTag());
                 std::vector<uint8_t> respBuffer = resp1.build();
@@ -136,7 +136,7 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
 
             case State::SEND_RX: {
                 // send message to receiver
-                std::cout << "State::SEND_RX\n";
+                std::cout << "State: "<< getStateName() << std::endl;
 
                 // Convert to intranetwork receive indication
                 convertTxReqToRxInd(req, rxInd);
@@ -156,50 +156,114 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
 
             case State::SEND_RESP2: { 
                 // send response 2 to sender
-                std::cout << "State::SEND_RESP2\n";
+                std::cout << "State: "<< getStateName() << std::endl;
                 
-                // Send second response (transmission complete)
+                // Send second response 
                 TransmitResponse resp2(MSG_TYPE_TRANSMIT_RESP2, STATUS_OK, req.getTag());
                 std::vector<uint8_t> respBuffer = resp2.build();
                 
                 if (!respBuffer.empty()) {
                     Message::printHexDump("Sending response 2", respBuffer);
                     senderPort.write(respBuffer);
-                    std::cout << "Waiting for ACK, State::WAIT_ACK...\n";
                     setCurrentState(State::WAIT_ACK);
+                    std::cout << "State: "<< getStateName() << std::endl;
                 } else {
                     std::cout << "Error in respBuffer, State::SEND_RESP2, changing to State::WAIT_TX\n";
                     setCurrentState(State::WAIT_TX);
+                    std::cout << "State: "<< getStateName() << std::endl;
                 };
             }
             break;
 
             case State::WAIT_ACK:{  
                 // wait for ack message
-                std::cout << "Recieved ACK\n";
-                setCurrentState(State::SEND_ACK_RESP1);
+                std::vector<uint8_t> buffer;
+                int n = receiverPort.read(buffer, MAX_PAYLOAD_SIZE + 100);
+                if (n > 0) {
+                    // Check if it's a valid message
+                    if (!buffer.empty() && buffer[0] == CMD_START_BYTE) {
+                        Message::printHexDump("Received Ack from receiver", buffer);
+                        
+                        // Parse the transmit request
+                        bool result = req.parse(buffer);
+                        
+                        if (result && req.getType() == MSG_TYPE_TRANSMIT_REQ && req.getOpcode() == OPCODE_TRANSMIT_REQ) {
+                            std::cout << "Valid transmit request received (ACK), tag: " 
+                                    << std::hex << std::setw(2) << std::setfill('0') 
+                                    << static_cast<int>(req.getTag()) << std::dec << "\n";
+                            setCurrentState(State::SEND_ACK_RESP1);
+                        } else {
+                            std::cout << "Invalid transmit request received, changing to state WAIT_TX\n";
+                            setCurrentState(State::WAIT_TX);
+                            std::cout << "State: "<< getStateName() << std::endl;
+                        }
+                        }
+                    }
             }
             break;
 
             case State::SEND_ACK_RESP1:{
                 // send ack response 1 to receiver
-                std::cout << "State::SEND_ACK_RESP1\n";
-                setCurrentState(State::SEND_ACK_RX);
+                std::cout << "State: "<< getStateName() << std::endl;
+
+                TransmitResponse resp1(MSG_TYPE_TRANSMIT_RESP1, STATUS_OK, req.getTag());
+                std::vector<uint8_t> respBuffer = resp1.build();
+                
+                if (!respBuffer.empty()) {
+                    Message::printHexDump("Sending ACK response 1", respBuffer);
+                    receiverPort.write(respBuffer);
+                    setCurrentState(State::SEND_ACK);
+                } else {
+                    std::cout << "Error in respBuffer, State::SEND_ACK_RESP1, changing to State::WAIT_TX\n";
+                    setCurrentState(State::WAIT_TX);
+                    std::cout << "State: "<< getStateName() << std::endl;
+                }
+
+
             }
             break;
 
-            case State::SEND_ACK_RX: {
+            case State::SEND_ACK: {
                 // send ack message to sender
-                std::cout << "State::SEND_ACK\n";
-                setCurrentState(State::SEND_ACK_RESP2);
+                std::cout << "State: "<< getStateName() << std::endl;
+
+                // Convert to intranetwork receive indication
+                convertTxReqToRxInd(req, rxInd);
+                        
+                // Build and send intranetwork receive indication to sender
+                std::vector<uint8_t> indBuffer = rxInd.build();
+                if (!indBuffer.empty()) {
+                        Message::printHexDump("Sending intranetwork receive indication", indBuffer);
+                        senderPort.write(indBuffer);
+                        setCurrentState(State::SEND_ACK_RESP2);
+                } else {
+                    std::cout << "Error in indBuffer, State::SEND_ACK, changing to State::WAIT_TX\n";
+                    setCurrentState(State::WAIT_TX);
+                    std::cout << "State: "<< getStateName() << std::endl;
+                }; 
+                
             }
             break;
 
             case State::SEND_ACK_RESP2: {
-                // send ack response 2 to sender
-                std::cout << "State::SEND_ACK_RESP2\n";
-                std::cout << "State::WAIT_TX\n";
+                // send ack response 2 to receiver
+                std::cout << "State: "<< getStateName() << std::endl;
+
+                // Send second response (transmission complete)
+                TransmitResponse resp2(MSG_TYPE_TRANSMIT_RESP2, STATUS_OK, req.getTag());
+                std::vector<uint8_t> respBuffer = resp2.build();
+                
+                if (!respBuffer.empty()) {
+                    Message::printHexDump("Sending ACK response 2", respBuffer);
+                    receiverPort.write(respBuffer);
+
+                } else {
+                    std::cout << "Error in respBuffer, State::SEND_RESP2, changing to State::WAIT_TX\n";
+
+                };
+
                 setCurrentState(State::WAIT_TX);
+                std::cout << "State: "<< getStateName() << std::endl;
             }
             break;
         }
