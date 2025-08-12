@@ -37,7 +37,7 @@ public:
         message = _message;
     }
 
-    std::string getCurrentMessage() {return message};
+    std::string getCurrentMessage() {return message;}
 
 
     std::string getStateName() const {
