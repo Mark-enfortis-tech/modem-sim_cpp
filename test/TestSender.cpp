@@ -272,7 +272,7 @@ public:
                 }
                 break;
 
-                case State::WAIT_RESP2: {
+                case State::WAIT_ACK: {
                     std::cout << "State: "<< getStateName() <<"\n";
 
                     std::vector<uint8_t> response = receiveResponse();
