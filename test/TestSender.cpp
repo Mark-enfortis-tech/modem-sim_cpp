@@ -124,41 +124,37 @@ public:
         buffer[3] = MSG_TYPE_TRANSMIT_REQ;
         buffer[4] = OPCODE_TRANSMIT_REQ;
         
-        // Tag
-        buffer[5] = tag;
-        
-        // TX Header
-        buffer[6] = 0x00;  // TX flags
-        buffer[7] = 0x00;  // Data service
-        buffer[8] = 0x00;  // Modulation
-        buffer[9] = 0x0D;  // TX service
-        buffer[10] = 0x00; // Priority
-        buffer[11] = 0x00; // CW
-        
-        // Network ID
-        buffer[12] = 0x01; // Network ID LSB
-        buffer[13] = 0x00; // Network ID MSB
-        
-        // Target ID
+        buffer[5] = 0x01;   // Data service type, intranetwork, unicast
+        buffer[6] = 0x00;   // Priority
+        buffer[7] = 0x00;   // ack service
+        buffer[8] = 0x01;   // Hops
+        buffer[9] = 0x01;   // gain
+
+        buffer[10] = 0x01;  // tag (LSB)
+        buffer[11] = 0x00;  // tag (MSB)
+                
+        buffer[12] = 0x00; // Encrypt
+        buffer[13] = 0x00; // Target port
+
         buffer[14] = 0x01; // Target ID LSB
-        buffer[15] = 0x00; // Target ID MSB
-        
-        // Target ID Type
-        buffer[16] = 0x00; // Short address
-        
-        // Source Port
-        buffer[17] = 0x01;
+        buffer[15] = 0x00; // Target ID MS
         
         // Payload
         if (!payload.empty()) {
-            std::memcpy(&buffer[18], payload.data(), payloadSize);
+            std::memcpy(&buffer[16], payload.data(), payloadSize);
         }
         
         // Checksum
-        buffer[18 + payloadSize] = Message::calculateChecksum(buffer);
+        buffer[16 + payloadSize] = Message::calculateChecksum(buffer);
         
         return buffer;
     }
+
+    /*
+    buffer[6] = 0x00;  // TX flags
+    buffer[8] = 0x00;  // Modulation
+    
+    */
     
     bool sendMessage(const std::vector<uint8_t>& buffer) {
         if (fd < 0) {
