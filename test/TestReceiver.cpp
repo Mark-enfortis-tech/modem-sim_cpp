@@ -293,7 +293,7 @@ private:
         // Verify checksum
         uint8_t expected_cs = packet[packet.size() - 1];
         uint8_t calculated_cs = Message::calculateChecksum(packet);
-        std::cout << "\nexpected_cs: " << static_cast<int> expected_cs << ", calculated_cs: "<< static_cast<int> calculated_cs << std::endl;
+        std::cout << "\nexpected_cs: " << static_cast<int>(expected_cs) << ", calculated_cs: " << static_cast<int>(calculated_cs) << std::endl;
         
         if (expected_cs != calculated_cs) {
             return -4;
