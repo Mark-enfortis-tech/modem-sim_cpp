@@ -214,7 +214,7 @@ public:
             switch(getCurrentState()){
                 case State::WAIT: {
                     // Small delay to prevent CPU hogging
-                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    usleep(500); // 10ms
                     setCurrentState(State::SEND_TX);
                 }
                 break;
