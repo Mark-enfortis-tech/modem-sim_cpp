@@ -34,6 +34,27 @@ void PlmSimulator::convertTxReqToRxInd(const TransmitRequest& req, IntranetworkR
     ind.createFromTransmitRequest(req);
 }
 
+void PlmSimulator::setCurrentState(State newState) {
+
+    // Update the state
+    currentState = newState;
+}
+
+std::string PlmSimulator::getStateName() const {
+    switch (currentState) {
+        case State::WAIT_TX: return "WAIT_TX";
+        case State::SEND_RESP1: return "SEND_RESP1";
+        case State::SEND_RX: return "SEND_RX";
+        case State::SEND_RESP2: return "SEND_RESP2";
+        case State::WAIT_ACK: return "WAIT_ACK";
+        case State::SEND_ACK_RESP1: return "SEND_ACK_RESP1";
+        case State::SEND_ACK_RX: return "SEND_ACK_RX";
+        case State::SEND_ACK_RESP2: return "SEND_ACK_RESP2";
+        default: return "UNKNOWN";
+    }
+}
+
+
 void PlmSimulator::run(const std::string& senderPortPath, const std::string& receiverPortPath) {
     // Set up signal handlers for graceful shutdown
     std::signal(SIGINT, handleSignal);
@@ -56,7 +77,7 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
     }
     
     std::cout << "Serial ports opened successfully\n";
-    std::cout << "Waiting for message, " << getStateName(currentState) << "...\n";
+    std::cout << "Waiting for message, " << getStateName() << "...\n";
     
     // Set running flag
     running = true;
@@ -66,56 +87,56 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
     // Main processing loop
     while (running) {
 
-        switch(currentState){
+        switch(getCurrentState()){
             case State::WAIT_TX:
             // wait for transmission
             // std::cout << "Recieved message\n";
-            currentState = State::SEND_RESP1;
+            setCurrentState(State::SEND_RESP1);
             break;
 
             case State::SEND_RESP1:
             // send response 1 to sender
             std::cout << "Recieved message\n";
             std::cout << "State::SEND_RESP1\n";
-            currentState = State::SEND_RX;
+            setCurrentState(State::SEND_RX);
             break;
 
             case State::SEND_RX:
             // send message to receiver
             std::cout << "State::SEND_RX\n";
-            currentState = State::SEND_RESP2;
+            setCurrentState(State::SEND_RESP2);
             break;
 
             case State::SEND_RESP2:
             // send response 2 to sender
             std::cout << "State::SEND_RESP2\n";
             std::cout << "Waiting for ACK, State::WAIT_ACK...\n";
-            currentState = State::WAIT_ACK;
+            setCurrentState(State::WAIT_ACK);
             break;
 
             case State::WAIT_ACK:
             // wait for ack message
             std::cout << "Recieved ACK\n";
-            currentState = State::SEND_ACK_RESP1;
+            setCurrentState(State::SEND_ACK_RESP1);
             break;
 
             case State::SEND_ACK_RESP1:
             // send ack response 1 to receiver
             std::cout << "State::SEND_ACK_RESP1\n";
-            currentState = State::SEND_ACK_RX;
+            setCurrentState(State::SEND_ACK_RX);
             break;
 
             case State::SEND_ACK_RX:
             // send ack message to sender
             std::cout << "State::SEND_ACK\n";
-            currentState = State::SEND_ACK_RESP2;
+            setCurrentState(State::SEND_ACK_RESP2);
             break;
 
             case State::SEND_ACK_RESP2:
             // send ack response 2 to sender
             std::cout << "State::SEND_ACK_RESP2\n";
             std::cout << "State::WAIT_TX\n";
-            currentState = State::WAIT_TX;
+            setCurrentState(State::WAIT_TX);
             break;
         }
         // Read from sender port

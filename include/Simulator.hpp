@@ -38,7 +38,9 @@ public:
     // Signal handler for graceful shutdown
     static void handleSignal(int sig);
 
-    State getCurrentState() const { return currentState; }
+    State getCurrentState() const { return currentState; };
+    void setCurrentState(State newState);
+    std::string getStateName();
     
 private:
     // Convert transmit request to intranetwork receive indication
