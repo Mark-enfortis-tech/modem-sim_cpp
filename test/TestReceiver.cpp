@@ -227,10 +227,9 @@ public:
             
             // Small delay to prevent CPU hogging
             usleep(100); // 10ms
+            }
         }
-        
         std::cout << "Receiver stopped\n";
-        }
     }
     
 private:
