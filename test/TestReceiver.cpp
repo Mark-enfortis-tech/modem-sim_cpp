@@ -176,7 +176,7 @@ public:
                 case State::SEND_ACK: {
                     std::cout << "State: "<< getStateName() <<"\n";
                     // Create transmit request
-                    std::vector<uint8_t> buffer = createTransmitRequest("ACK", 0x01);
+                    std::vector<uint8_t> buffer = createTransmitRequest(std::string("ACK"), 0x01);
 
                     // Send the message
                     Message::printHexDump("Sending transmit request", buffer);
@@ -187,17 +187,17 @@ public:
                     }
                     std::cout << "Sent " << buffer.size() << " bytes\n";
 
-                    setCurrentState(State::WAIT_RESP1);
+                    setCurrentState(State::WAIT_ACK_RESP1);
                     std::cout << "State: "<< getStateName() <<"\n";
                 }
                 break;
 
-                case State::WAIT_RESP1: {
+                case State::WAIT_ACK_RESP1: {
 
                     std::vector<uint8_t> response = receiveResponse();
                     if (!response.empty()) {
                         Message::printHexDump("Received response1", response);
-                        setCurrentState(State::WAIT_RESP2);
+                        setCurrentState(State::WAIT_ACK_RESP2);
                         std::cout << "State: "<< getStateName() <<"\n";
                     } else {
                         std::cout << "No response received or error, changing to State:WAIT_RX\n";
@@ -208,7 +208,7 @@ public:
                 }
                 break;
 
-                case State::WAIT_RESP2: {
+                case State::WAIT_ACK_RESP2: {
 
                     std::vector<uint8_t> response = receiveResponse();
                     if (!response.empty()) {
