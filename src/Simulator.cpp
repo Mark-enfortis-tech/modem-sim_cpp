@@ -48,7 +48,7 @@ std::string PlmSimulator::getStateName() const {
         case State::SEND_RESP2: return "SEND_RESP2";
         case State::WAIT_ACK: return "WAIT_ACK";
         case State::SEND_ACK_RESP1: return "SEND_ACK_RESP1";
-        case State::SEND_ACK_RX: return "SEND_ACK_RX";
+        case State::SEND_ACK: return "SEND_ACK";
         case State::SEND_ACK_RESP2: return "SEND_ACK_RESP2";
         default: return "UNKNOWN";
     }
