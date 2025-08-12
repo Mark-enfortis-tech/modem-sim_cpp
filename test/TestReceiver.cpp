@@ -25,7 +25,7 @@ public:
         WAIT_ACK_RESP2
     };
 
-        State getCurrentState() const { return currentState; };
+    State getCurrentState() const { return currentState; };
 
     void setCurrentState(State newState) {
         currentState = newState;
@@ -230,6 +230,7 @@ public:
         }
         
         std::cout << "Receiver stopped\n";
+        }
     }
     
 private:
