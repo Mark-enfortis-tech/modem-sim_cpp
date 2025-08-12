@@ -89,7 +89,7 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
     // Main processing loop
     while (running) {
         switch(getCurrentState()){
-            
+
             case State::WAIT_TX: {
                 // wait for transmission
                 std::vector<uint8_t> buffer;
@@ -174,29 +174,33 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
             }
             break;
 
-            case State::WAIT_ACK:  // wait for ack message
-            
-            std::cout << "Recieved ACK\n";
-            setCurrentState(State::SEND_ACK_RESP1);
+            case State::WAIT_ACK:{  
+                // wait for ack message
+                std::cout << "Recieved ACK\n";
+                setCurrentState(State::SEND_ACK_RESP1);
+            }
             break;
 
-            case State::SEND_ACK_RESP1:
-            // send ack response 1 to receiver
-            std::cout << "State::SEND_ACK_RESP1\n";
-            setCurrentState(State::SEND_ACK_RX);
+            case State::SEND_ACK_RESP1:{
+                // send ack response 1 to receiver
+                std::cout << "State::SEND_ACK_RESP1\n";
+                setCurrentState(State::SEND_ACK_RX);
+            }
             break;
 
-            case State::SEND_ACK_RX:
-            // send ack message to sender
-            std::cout << "State::SEND_ACK\n";
-            setCurrentState(State::SEND_ACK_RESP2);
+            case State::SEND_ACK_RX: {
+                // send ack message to sender
+                std::cout << "State::SEND_ACK\n";
+                setCurrentState(State::SEND_ACK_RESP2);
+            }
             break;
 
-            case State::SEND_ACK_RESP2:
-            // send ack response 2 to sender
-            std::cout << "State::SEND_ACK_RESP2\n";
-            std::cout << "State::WAIT_TX\n";
-            setCurrentState(State::WAIT_TX);
+            case State::SEND_ACK_RESP2: {
+                // send ack response 2 to sender
+                std::cout << "State::SEND_ACK_RESP2\n";
+                std::cout << "State::WAIT_TX\n";
+                setCurrentState(State::WAIT_TX);
+            }
             break;
         }
         
