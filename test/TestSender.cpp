@@ -27,7 +27,7 @@ public:
     State getCurrentState() const { return currentState; };
 
     void setCurrentState(State newState) {
-        currentState = newState'
+        currentState = newState;
     };
 
 
@@ -192,6 +192,255 @@ public:
         buffer.resize(n);
         return buffer;
     }
+
+
+    void stop() {
+        running = false;
+    }
+
+    void run() {
+        if (fd < 0) {
+            std::cerr << "Serial port not open\n";
+            return;
+        }
+        
+        running = true;
+        std::cout << "Sender running, waiting for message, " << getStateName() << "...\n";
+        
+        while (running) {
+            switch(getCurrentState()){
+                case State::WAIT: {
+                    // Small delay to prevent CPU hogging
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    setCurrentState(State::SEND_TX);
+                }
+                break;
+
+                case State::SEND_TX: {
+                    std::cout << "State: "<< getStateName() <<"\n";
+                    // Create transmit request
+                    std::vector<uint8_t> buffer = sender.createTransmitRequest(message, 0x01);
+
+                    // Send the message
+                    Message::printHexDump("Sending transmit request", buffer);
+                    if (!sender.sendMessage(buffer)) {
+                        std::cerr << "Failed to send message, changing to State:WAIT\n";
+                        setCurrentState(State::WAIT);
+                    }
+                    std::cout << "Sent " << buffer.size() << " bytes\n";
+
+                    setCurrentState(State::WAIT_RESP1);
+                }
+                break;
+
+                case State::WAIT_RESP1: {
+                    std::cout << "State: "<< getStateName() <<"\n";
+
+                    std::vector<uint8_t> response = sender.receiveResponse();
+                    if (!response.empty()) {
+                        Message::printHexDump("Received response1", response);
+                        setCurrentState(State::WAIT_RESP2);
+                    } else {
+                        std::cout << "No response received or error, changing to State:WAIT\n";
+                        setCurrentState(State::WAIT);
+                        break;
+                    }
+                }
+                break;
+
+                case State::WAIT_RESP2: {
+                    std::cout << "State: "<< getStateName() <<"\n";
+
+                    std::vector<uint8_t> response = sender.receiveResponse();
+                    if (!response.empty()) {
+                        Message::printHexDump("Received response2", response);
+                        setCurrentState(State::WAIT_ACK);
+                    } else {
+                        std::cout << "No response received or error, changing to State:WAIT\n";
+                        setCurrentState(State::WAIT);
+                        break;
+                    }
+                }
+                break;
+
+                case State::WAIT_RESP2: {
+                    std::cout << "State: "<< getStateName() <<"\n";
+
+                    std::vector<uint8_t> response = sender.receiveResponse();
+                    if (!response.empty()) {
+                        Message::printHexDump("Received ACK", response);
+
+                        // Extract payload if it's an intranetwork receive message
+                        if (buffer.size() >= 5 && 
+                            buffer[0] == CMD_START_BYTE && 
+                            buffer[3] == MSG_TYPE_INTRANETWORK_RECEIVE && 
+                            buffer[4] == OPCODE_INTRANETWORK_RECEIVE) {
+                            
+                            std::vector<uint8_t> payload;
+                            int result = extractPayload(buffer, payload);
+                            
+                            if (result > 0) {
+                                // Try to interpret as text
+                                std::string text(payload.begin(), payload.end());
+                                std::cout << "Received text: " << text << std::endl;
+                            }
+                        }
+
+                        setCurrentState(State::WAIT);
+                        std::cout << "State: "<< getStateName() <<"\n";
+                    } else {
+                        std::cout << "No response received or error, changing to State:WAIT\n";
+                        setCurrentState(State::WAIT);
+                        break;
+                    }
+                }
+                break;
+            }
+            
+            // Small delay to prevent CPU hogging
+            usleep(100); // 10ms
+
+        }
+    }
+    
+private:
+    int fd;
+    std::atomic<bool> running;
+    State currentState;
+
+    std::vector<uint8_t> receiveMessage(int timeout_ms = 100) {
+        if (fd < 0) {
+            return {};
+        }
+        
+        // Set non-blocking read with timeout
+        fd_set readfds;
+        struct timeval timeout;
+        
+        FD_ZERO(&readfds);
+        FD_SET(fd, &readfds);
+        
+        timeout.tv_sec = timeout_ms / 1000;
+        timeout.tv_usec = (timeout_ms % 1000) * 1000;
+        
+        int select_result = select(fd + 1, &readfds, nullptr, nullptr, &timeout);
+        
+        if (select_result <= 0) {
+            return {}; // Timeout or error
+        }
+        
+        // Data is available, read it
+        std::vector<uint8_t> buffer(1024);
+        int n = ::read(fd, buffer.data(), buffer.size());
+        
+        if (n <= 0) {
+            return {};
+        }
+        
+        buffer.resize(n);
+        return buffer;
+    }
+    
+    int extractPayload(const std::vector<uint8_t>& packet, std::vector<uint8_t>& payload) {
+        if (packet.size() < 27) {  // Minimum packet size with empty payload
+            return -1;
+        }
+        
+        // Verify it's an intranetwork receive message
+        if (packet[0] != CMD_START_BYTE || 
+            packet[3] != MSG_TYPE_INTRANETWORK_RECEIVE || 
+            packet[4] != OPCODE_INTRANETWORK_RECEIVE) {
+            return -2;
+        }
+        
+        // Extract length field
+        uint16_t msg_len = packet[1] | (packet[2] << 8);
+        
+        // Verify message length
+        if (packet.size() < msg_len + 4) {  // +4 for start byte, length (2 bytes), and checksum
+            return -3;
+        }
+        
+        // Verify checksum
+        uint8_t expected_cs = packet[packet.size() - 1];
+        uint8_t calculated_cs = Message::calculateChecksum(packet);
+        if (expected_cs != calculated_cs) {
+            return -4;
+        }
+        
+        // Calculate payload length and extract payload
+        int payload_len = msg_len - 23;  // 23 bytes for header fields excluding start byte and length
+        if (payload_len <= 0) {
+            payload.clear();
+            return 0;  // No payload
+        }
+        
+        // Copy payload (starts at offset 26)
+        payload.assign(packet.begin() + 26, packet.begin() + 26 + payload_len);
+        
+        return payload_len;
+    }
+    
+    std::vector<uint8_t> createTransmitRequest(const std::vector<uint8_t>& payload, uint8_t tag) {
+        size_t payloadSize = std::min(payload.size(), static_cast<size_t>(MAX_PAYLOAD_SIZE));
+        std::vector<uint8_t> buffer(19 + payloadSize); // Header + payload + checksum
+        
+        // Header
+        buffer[0] = CMD_START_BYTE;
+        
+        // Length (excludes start byte, length field, and checksum)
+        uint16_t length_field = 15 + payloadSize; // 15 bytes for header fields excluding start byte and length
+        buffer[1] = length_field & 0xFF;
+        buffer[2] = (length_field >> 8) & 0xFF;
+        
+        // Type & Opcode
+        buffer[3] = MSG_TYPE_TRANSMIT_REQ;
+        buffer[4] = OPCODE_TRANSMIT_REQ;
+        
+        // Tag
+        buffer[5] = tag;
+        
+        // TX Header
+        buffer[6] = 0x00;  // TX flags
+        buffer[7] = 0x00;  // Data service
+        buffer[8] = 0x00;  // Modulation
+        buffer[9] = 0x0D;  // TX service
+        buffer[10] = 0x00; // Priority
+        buffer[11] = 0x00; // CW
+        
+        // Network ID
+        buffer[12] = 0x01; // Network ID LSB
+        buffer[13] = 0x00; // Network ID MSB
+        
+        // Target ID
+        buffer[14] = 0x00; // Target ID LSB
+        buffer[15] = 0x00; // Target ID MSB
+        
+        // Target ID Type
+        buffer[16] = 0x00; // Short address
+        
+        // Source Port
+        buffer[17] = 0x01;
+        
+        // Payload
+        if (!payload.empty()) {
+            std::memcpy(&buffer[18], payload.data(), payloadSize);
+        }
+        
+        // Checksum
+        buffer[18 + payloadSize] = Message::calculateChecksum(buffer);
+        
+        return buffer;
+    }
+  
+    bool sendMessage(const std::vector<uint8_t>& buffer) {
+        if (fd < 0) {
+            return false;
+        }
+        
+        int n = ::write(fd, buffer.data(), buffer.size());
+        return (n == static_cast<int>(buffer.size()));
+    }
     
 private:
     int fd;
@@ -239,9 +488,16 @@ private:
 
 };
 
+// Global receiver instance for signal handler
+Testsender* g_sender = nullptr;
 
-
-
+// Signal handler for graceful shutdown
+void handleSignal(int sig) {
+    std::cout << "\nReceived signal " << sig << ", shutting down...\n";
+    if (g_sender) {
+        g_sender->stop();
+    }
+}
 
 
 
@@ -252,12 +508,18 @@ int main(int argc, char *argv[]) {
         std::cout << "Example: " << argv[0] << " /tmp/vserial1 \"Hello, World!\"\n";
         return 1;
     }
+
+    // Set up signal handlers for graceful shutdown
+    std::signal(SIGINT, handleSignal);
+    std::signal(SIGTERM, handleSignal);
     
     std::string port = argv[1];
     std::string message = (argc > 2) ? argv[2] : "Test message from sender";
     
     std::cout << "Opening serial port " << port << "...\n";
     TestSender sender;
+    g_sender = &sender;
+
     sender.setCurrentState(State::WAIT);
     std::cout << "State: "<< getStateName() <<"\n";
     
@@ -268,104 +530,138 @@ int main(int argc, char *argv[]) {
     
     std::cout << "Serial port opened successfully\n";
 
-    // Set running flag
-    running = true;
-
-    // Main processing loop
-    while(running){
-        switch(getCurrentState()){
-
-            case State::WAIT: {
-                // Small delay to prevent CPU hogging
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
-                setCurrentState(State::SEND_TX);
-            }
-            break;
-
-            case State::SEND_TX: {
-                std::cout << "State: "<< getStateName() <<"\n";
-                // Create transmit request
-                std::vector<uint8_t> buffer = sender.createTransmitRequest(message, 0x01);
-
-                // Send the message
-                Message::printHexDump("Sending transmit request", buffer);
-                if (!sender.sendMessage(buffer)) {
-                    std::cerr << "Failed to send message, changing to State:WAIT\n";
-                    setCurrentState(State::WAIT);
-                }
-                std::cout << "Sent " << buffer.size() << " bytes\n";
-
-                setCurrentState(State::WAIT_RESP1);
-            }
-            break;
-
-            case State::WAIT_RESP1: {
-                std::cout << "State: "<< getStateName() <<"\n";
-
-                std::vector<uint8_t> response = sender.receiveResponse();
-                if (!response.empty()) {
-                    Message::printHexDump("Received response1", response);
-                    setCurrentState(State::WAIT_RESP2);
-                } else {
-                    std::cout << "No response received or error, changing to State:WAIT\n";
-                    setCurrentState(State::WAIT);
-                    break;
-                }
-            }
-            break;
-
-            case State::WAIT_RESP2: {
-                std::cout << "State: "<< getStateName() <<"\n";
-
-                std::vector<uint8_t> response = sender.receiveResponse();
-                if (!response.empty()) {
-                    Message::printHexDump("Received response2", response);
-                    setCurrentState(State::WAIT_ACK);
-                } else {
-                    std::cout << "No response received or error, changing to State:WAIT\n";
-                    setCurrentState(State::WAIT);
-                    break;
-                }
-            }
-            break;
-
-            case State::WAIT_RESP2: {
-                std::cout << "State: "<< getStateName() <<"\n";
-
-                std::vector<uint8_t> response = sender.receiveResponse();
-                if (!response.empty()) {
-                    Message::printHexDump("Received ACK", response);
-
-                    // Extract payload if it's an intranetwork receive message
-                    if (buffer.size() >= 5 && 
-                        buffer[0] == CMD_START_BYTE && 
-                        buffer[3] == MSG_TYPE_INTRANETWORK_RECEIVE && 
-                        buffer[4] == OPCODE_INTRANETWORK_RECEIVE) {
-                        
-                        std::vector<uint8_t> payload;
-                        int result = extractPayload(buffer, payload);
-                        
-                        if (result > 0) {
-                            // Try to interpret as text
-                            std::string text(payload.begin(), payload.end());
-                            std::cout << "Received text: " << text << std::endl;
-                        }
-                    }
-
-                    setCurrentState(State::WAIT);
-                    std::cout << "State: "<< getStateName() <<"\n";
-                } else {
-                    std::cout << "No response received or error, changing to State:WAIT\n";
-                    setCurrentState(State::WAIT);
-                    break;
-                }
-            }
-            break;
-        }
-    }
+    // Run the receiver
+    sender.run();
     
+    g_sender = nullptr;
+
+
     return 0;
 }
+
+
+
+
+// int main(int argc, char *argv[]) {
+//     if (argc < 2) {
+//         std::cout << "Usage: " << argv[0] << " <serial_port> [message]\n";
+//         std::cout << "Example: " << argv[0] << " /tmp/vserial1 \"Hello, World!\"\n";
+//         return 1;
+//     }
+    
+//     std::string port = argv[1];
+//     std::string message = (argc > 2) ? argv[2] : "Test message from sender";
+    
+//     std::cout << "Opening serial port " << port << "...\n";
+//     TestSender sender;
+//     sender.setCurrentState(State::WAIT);
+//     std::cout << "State: "<< getStateName() <<"\n";
+    
+//     if (!sender.open(port)) {
+//         std::cerr << "Failed to open serial port " << port << "\n";
+//         return 1;
+//     }
+    
+//     std::cout << "Serial port opened successfully\n";
+
+//     // Set running flag
+//     running = true;
+
+//     // Main processing loop
+//     while(running){
+//         switch(getCurrentState()){
+
+//             case State::WAIT: {
+//                 // Small delay to prevent CPU hogging
+//                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//                 setCurrentState(State::SEND_TX);
+//             }
+//             break;
+
+//             case State::SEND_TX: {
+//                 std::cout << "State: "<< getStateName() <<"\n";
+//                 // Create transmit request
+//                 std::vector<uint8_t> buffer = sender.createTransmitRequest(message, 0x01);
+
+//                 // Send the message
+//                 Message::printHexDump("Sending transmit request", buffer);
+//                 if (!sender.sendMessage(buffer)) {
+//                     std::cerr << "Failed to send message, changing to State:WAIT\n";
+//                     setCurrentState(State::WAIT);
+//                 }
+//                 std::cout << "Sent " << buffer.size() << " bytes\n";
+
+//                 setCurrentState(State::WAIT_RESP1);
+//             }
+//             break;
+
+//             case State::WAIT_RESP1: {
+//                 std::cout << "State: "<< getStateName() <<"\n";
+
+//                 std::vector<uint8_t> response = sender.receiveResponse();
+//                 if (!response.empty()) {
+//                     Message::printHexDump("Received response1", response);
+//                     setCurrentState(State::WAIT_RESP2);
+//                 } else {
+//                     std::cout << "No response received or error, changing to State:WAIT\n";
+//                     setCurrentState(State::WAIT);
+//                     break;
+//                 }
+//             }
+//             break;
+
+//             case State::WAIT_RESP2: {
+//                 std::cout << "State: "<< getStateName() <<"\n";
+
+//                 std::vector<uint8_t> response = sender.receiveResponse();
+//                 if (!response.empty()) {
+//                     Message::printHexDump("Received response2", response);
+//                     setCurrentState(State::WAIT_ACK);
+//                 } else {
+//                     std::cout << "No response received or error, changing to State:WAIT\n";
+//                     setCurrentState(State::WAIT);
+//                     break;
+//                 }
+//             }
+//             break;
+
+//             case State::WAIT_RESP2: {
+//                 std::cout << "State: "<< getStateName() <<"\n";
+
+//                 std::vector<uint8_t> response = sender.receiveResponse();
+//                 if (!response.empty()) {
+//                     Message::printHexDump("Received ACK", response);
+
+//                     // Extract payload if it's an intranetwork receive message
+//                     if (buffer.size() >= 5 && 
+//                         buffer[0] == CMD_START_BYTE && 
+//                         buffer[3] == MSG_TYPE_INTRANETWORK_RECEIVE && 
+//                         buffer[4] == OPCODE_INTRANETWORK_RECEIVE) {
+                        
+//                         std::vector<uint8_t> payload;
+//                         int result = extractPayload(buffer, payload);
+                        
+//                         if (result > 0) {
+//                             // Try to interpret as text
+//                             std::string text(payload.begin(), payload.end());
+//                             std::cout << "Received text: " << text << std::endl;
+//                         }
+//                     }
+
+//                     setCurrentState(State::WAIT);
+//                     std::cout << "State: "<< getStateName() <<"\n";
+//                 } else {
+//                     std::cout << "No response received or error, changing to State:WAIT\n";
+//                     setCurrentState(State::WAIT);
+//                     break;
+//                 }
+//             }
+//             break;
+//         }
+//     }
+    
+//     return 0;
+// }
 
 
 

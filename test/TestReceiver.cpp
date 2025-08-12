@@ -28,7 +28,7 @@ public:
         State getCurrentState() const { return currentState; };
 
     void setCurrentState(State newState) {
-        currentState = newState'
+        currentState = newState;
     };
 
    
