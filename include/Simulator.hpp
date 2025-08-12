@@ -28,20 +28,6 @@ public:
     // Prevent copying
     PlmSimulator(const PlmSimulator&) = delete;
     PlmSimulator& operator=(const PlmSimulator&) = delete;
-
-
-    std::string getStateName() const {
-        switch (currentState) {
-            case State::WAIT_TX: return "WAIT_TX";
-            case State::SEND_RESP1: return "SEND_RESP1";
-            case State::SEND_RX: return "SEND_RX";
-            case State::WAIT_ACK: return "WAIT_ACK";
-            case State::SEND_ACK_RESP1: return "SEND_ACK_RESP1";
-            case State::SEND_ACK: return "SEND_ACK";
-            case State::SEND_ACK_RESP2: return "SEND_ACK_RESP2";
-            default: return "UNKNOWN";
-        }
-    };
     
     // Run the simulator
     void run(const std::string& senderPort, const std::string& receiverPort);
