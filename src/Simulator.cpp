@@ -166,7 +166,7 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
                     Message::printHexDump("Sending response 2", respBuffer);
                     senderPort.write(respBuffer);
                     std::cout << "Waiting for ACK, State::WAIT_ACK...\n";
-                    setCurrentState(State::WAIT_ACK)
+                    setCurrentState(State::WAIT_ACK);
                 } else {
                     std::cout << "Error in respBuffer, State::SEND_RESP2, changing to State::WAIT_TX\n";
                     setCurrentState(State::WAIT_TX);
