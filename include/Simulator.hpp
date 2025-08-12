@@ -40,7 +40,7 @@ public:
 
     State getCurrentState() const { return currentState; };
     void setCurrentState(State newState);
-    std::string getStateName();
+    std::string getStateName() const;
     
 private:
     // Convert transmit request to intranetwork receive indication
