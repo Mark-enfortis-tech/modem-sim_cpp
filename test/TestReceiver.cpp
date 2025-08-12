@@ -214,11 +214,11 @@ public:
                     if (!response.empty()) {
                         Message::printHexDump("Received response2", response);
                         setCurrentState(State::WAIT_RX);
-                        std::cout << "State: "<< getStateName() <<"\n";
+                        std::cout << "\n\n\nState: "<< getStateName() <<"\n";
                     } else {
                         std::cout << "No response received or error, changing to State:WAIT\n";
                         setCurrentState(State::WAIT_RX);
-                        std::cout << "State: "<< getStateName() <<"\n";
+                        std::cout << "\n\n\nState: "<< getStateName() <<"\n";
                         break;
                     }
                 }

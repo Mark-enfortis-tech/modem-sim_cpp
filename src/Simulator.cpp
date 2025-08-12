@@ -263,7 +263,7 @@ void PlmSimulator::run(const std::string& senderPortPath, const std::string& rec
                 };
 
                 setCurrentState(State::WAIT_TX);
-                std::cout << "\n\nState: "<< getStateName() << std::endl;
+                std::cout << "\n\n\n\nState: "<< getStateName() << std::endl;
             }
             break;
         }

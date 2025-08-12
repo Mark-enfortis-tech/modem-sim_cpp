@@ -295,7 +295,7 @@ public:
                         }
 
                         setCurrentState(State::WAIT);
-                        std::cout << "State: "<< getStateName() <<"\n";
+                        std::cout << "\n\n\nState: "<< getStateName() <<"\n";
                     } else {
                         std::cout << "No response received or error, changing to State:WAIT\n";
                         setCurrentState(State::WAIT);
