@@ -12,7 +12,7 @@
 
 class TestSender {
 public:
-    TestSender() : fd(-1), , currentState(State::WAIT) {}
+    TestSender() : fd(-1), currentState(State::WAIT) {}
     
     ~TestSender() {
         close();
