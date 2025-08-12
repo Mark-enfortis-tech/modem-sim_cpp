@@ -8,7 +8,8 @@
 
 uint8_t Message::calculateChecksum(const std::vector<uint8_t>& data) {
     uint8_t cs = 0;
-    for (size_t i = 3; i < data.size(); ++i) {
+    // Exclude the last byte (the checksum itself)
+    for (size_t i = 3; i < data.size() - 1; ++i) {
         cs ^= data[i];
     }
     return cs;
@@ -16,11 +17,13 @@ uint8_t Message::calculateChecksum(const std::vector<uint8_t>& data) {
 
 uint8_t Message::calculateChecksum(const uint8_t* data, int len) {
     uint8_t cs = 0;
-    for (int i = 3; i < len; ++i) {
+    // Exclude the last byte (the checksum itself)
+    for (int i = 3; i < len - 1; ++i) {
         cs ^= data[i];
     }
     return cs;
 }
+
 
 void Message::printHexDump(const std::string& prefix, const std::vector<uint8_t>& data) {
     std::cout << prefix << " (" << data.size() << " bytes):";
