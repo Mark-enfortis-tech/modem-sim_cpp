@@ -5,6 +5,7 @@
 #include <thread>
 #include <chrono>
 
+
 // Static instance pointer for signal handler
 PlmSimulator* PlmSimulator::instance = nullptr;
 
@@ -19,7 +20,7 @@ PlmSimulator::~PlmSimulator() {
 }
 
 void PlmSimulator::handleSignal(int sig) {
-    std::cout << "\nReceived signal " << sig << ", shutting down...\n";
+    std::cout << "\nReceived signal " << sig << ", shutting down... \n";
     if (instance) {
         instance->stop();
     }
